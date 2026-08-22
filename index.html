@@ -145,7 +145,8 @@
 let scanner = null;
 let scannerRunning = false;
 let scanLocked = false;
-
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbyIJ3H6BV26AhvtllT1P-7sYXADInO5zPY8rTnRhUtGEecyWD9y_AGbVh57HKIto1fVtQ/exec';
 
 /* ==============================
    MULAI SCANNER
@@ -206,30 +207,25 @@ function startScanner() {
 
       function(decodedText) {
 
-        if (scanLocked) {
-          return;
-        }
+  if (scanLocked) {
+    return;
+  }
 
-        scanLocked = true;
+  scanLocked = true;
 
-        document
-          .getElementById('result')
-          .textContent =
-            'BARCODE: ' + decodedText;
+  document
+    .getElementById('result')
+    .textContent =
+      'Barcode: ' + decodedText;
 
-        document
-          .getElementById('status')
-          .textContent =
-            'Barcode berhasil dibaca.';
+  document
+    .getElementById('status')
+    .textContent =
+      'Mencari produk...';
 
-        /*
-         * BELUM dikirim ke Spreadsheet.
-         *
-         * Untuk tahap ini kita hanya
-         * menguji kemampuan scanner.
-         */
+  lookupProduct(decodedText);
 
-      },
+}
 
       function(errorMessage) {
 
@@ -263,7 +259,47 @@ function startScanner() {
     });
 }
 
+function lookupProduct(barcode) {
 
+  const url =
+    API_URL +
+    '?api=product' +
+    '&code=' +
+    encodeURIComponent(barcode) +
+    '&callback=productCallback';
+
+
+  const oldScript =
+    document.getElementById('productApiScript');
+
+  if (oldScript) {
+    oldScript.remove();
+  }
+
+
+  const script =
+    document.createElement('script');
+
+  script.id =
+    'productApiScript';
+
+  script.src = url;
+
+
+  script.onerror = function() {
+
+    document
+      .getElementById('status')
+      .textContent =
+        'Gagal menghubungi server produk.';
+
+    scanLocked = false;
+  };
+
+
+  document.body.appendChild(script);
+}
+  
 /* ==============================
    HENTIKAN SCANNER
    ============================== */
@@ -313,6 +349,81 @@ function stopScanner() {
         .classList.remove('active');
 
     });
+}
+
+  function productCallback(response) {
+
+  if (!response || !response.success) {
+
+    document
+      .getElementById('status')
+      .textContent =
+        response && response.message
+          ? response.message
+          : 'Produk tidak ditemukan.';
+
+    document
+      .getElementById('result')
+      .textContent =
+        'Barcode: ' +
+        (response && response.code
+          ? response.code
+          : '');
+
+    scanLocked = false;
+
+    return;
+  }
+
+
+  const product =
+    response.product;
+
+
+  document
+    .getElementById('result')
+    .innerHTML =
+      '<strong>' +
+      escapeHtml(product.name) +
+      '</strong><br>' +
+      escapeHtml(product.supplier) +
+      '<br><br>' +
+      formatRupiah(product.price);
+
+
+  document
+    .getElementById('status')
+    .textContent =
+      'Produk ditemukan.';
+
+
+  /*
+   * Untuk tahap ini belum masuk keranjang.
+   *
+   * Kita hanya membuktikan:
+   *
+   * SCAN → API → PRODUK → tampil.
+   */
+}
+
+  function formatRupiah(value) {
+
+  return 'Rp' +
+    Number(value || 0)
+      .toLocaleString('id-ID');
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
 }
 
 </script>
