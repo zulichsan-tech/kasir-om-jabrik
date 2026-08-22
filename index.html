@@ -69,6 +69,10 @@
       cursor: pointer;
     }
 
+    .scan-button:active {
+      transform: scale(0.98);
+    }
+
 
     /* =========================
        STATUS
@@ -85,6 +89,12 @@
       text-align: center;
 
       font-size: 14px;
+    }
+
+    .status.success {
+      background: #dff5e5;
+      color: #176b35;
+      font-weight: bold;
     }
 
 
@@ -117,6 +127,8 @@
       text-align: center;
 
       font-size: 15px;
+
+      min-height: 55px;
     }
 
     .close-button {
@@ -248,9 +260,7 @@
 <div class="app">
 
 
-  <!-- =========================
-       HEADER
-       ========================= -->
+  <!-- HEADER -->
 
   <div class="header">
 
@@ -262,9 +272,7 @@
   <div class="content">
 
 
-    <!-- =========================
-         SCAN
-         ========================= -->
+    <!-- SCAN BUTTON -->
 
     <button class="scan-button"
             onclick="startScanner()">
@@ -274,6 +282,8 @@
     </button>
 
 
+    <!-- STATUS -->
+
     <div id="status"
          class="status">
 
@@ -282,9 +292,7 @@
     </div>
 
 
-    <!-- =========================
-         SCANNER
-         ========================= -->
+    <!-- SCANNER -->
 
     <div id="scanner"
          class="scanner">
@@ -308,9 +316,7 @@
     </div>
 
 
-    <!-- =========================
-         KERANJANG
-         ========================= -->
+    <!-- KERANJANG -->
 
     <div class="cart">
 
@@ -377,6 +383,15 @@ const API_URL =
   'https://script.google.com/macros/s/AKfycbyIJ3H6BV26AhvtllT1P-7sYXADInO5zPY8rTnRhUtGEecyWD9y_AGbVh57HKIto1fVtQ/exec';
 
 
+/*
+ * Jeda setelah barcode berhasil dibaca.
+ *
+ * 1200 ms = 1,2 detik
+ */
+
+const SCAN_DELAY = 1200;
+
+
 
 /* =====================================================
    STATE
@@ -388,20 +403,11 @@ let scannerRunning = false;
 
 let scanLocked = false;
 
+let restartTimer = null;
+
 
 /*
- * Keranjang.
- *
- * Struktur:
- *
- * {
- *   PRD001: {
- *     id: "PRD001",
- *     name: "NASI GEPREK",
- *     price: 10000,
- *     qty: 2
- *   }
- * }
+ * Keranjang
  */
 
 let cart = {};
@@ -445,11 +451,90 @@ function escapeHtml(value) {
 
 
 /* =====================================================
+   BEEP
+   ===================================================== */
+
+function beep() {
+
+  try {
+
+    const AudioContext =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+    if (!AudioContext) {
+      return;
+    }
+
+    const audioContext =
+      new AudioContext();
+
+    const oscillator =
+      audioContext.createOscillator();
+
+    const gainNode =
+      audioContext.createGain();
+
+
+    oscillator.type = 'sine';
+
+    oscillator.frequency.value = 1000;
+
+
+    gainNode.gain.setValueAtTime(
+      0.0001,
+      audioContext.currentTime
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.20,
+      audioContext.currentTime + 0.01
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioContext.currentTime + 0.12
+    );
+
+
+    oscillator.connect(gainNode);
+
+    gainNode.connect(
+      audioContext.destination
+    );
+
+
+    oscillator.start();
+
+    oscillator.stop(
+      audioContext.currentTime + 0.12
+    );
+
+  }
+
+  catch (error) {
+
+    console.log(
+      'Beep tidak tersedia:',
+      error
+    );
+
+  }
+
+}
+
+
+
+/* =====================================================
    START SCANNER
    ===================================================== */
 
 function startScanner() {
 
+
+  /*
+   * Jangan membuka scanner jika sudah berjalan.
+   */
 
   if (scannerRunning) {
 
@@ -458,9 +543,30 @@ function startScanner() {
   }
 
 
+  /*
+   * Batalkan timer restart lama.
+   */
+
+  if (restartTimer) {
+
+    clearTimeout(
+      restartTimer
+    );
+
+    restartTimer = null;
+
+  }
+
+
   document
     .getElementById('scanner')
     .classList.add('active');
+
+
+  document
+    .getElementById('status')
+    .className =
+      'status';
 
 
   document
@@ -519,12 +625,17 @@ function startScanner() {
       config,
 
 
-      /* =========================
+      /* ==========================================
          BARCODE BERHASIL DIBACA
-         ========================= */
+         ========================================== */
 
       function(decodedText) {
 
+
+        /*
+         * Jika sedang dalam proses,
+         * abaikan pembacaan berikutnya.
+         */
 
         if (scanLocked) {
 
@@ -536,17 +647,51 @@ function startScanner() {
         scanLocked = true;
 
 
+        /*
+         * BEEP
+         */
+
+        beep();
+
+
+        /*
+         * Feedback visual
+         */
+
+        document
+          .getElementById('status')
+          .className =
+            'status success';
+
+
+        document
+          .getElementById('status')
+          .textContent =
+            '✓ SCAN BERHASIL';
+
+
         document
           .getElementById('scannerResult')
           .textContent =
             'Barcode: ' + decodedText;
 
 
-        document
-          .getElementById('status')
-          .textContent =
-            'Mencari produk...';
+        /*
+         * PENTING:
+         *
+         * Hentikan kamera sementara.
+         *
+         * Dengan demikian barcode yang masih
+         * berada di depan kamera tidak langsung
+         * terbaca kembali.
+         */
 
+        pauseScanner();
+
+
+        /*
+         * Cari produk.
+         */
 
         lookupProduct(decodedText);
 
@@ -554,14 +699,16 @@ function startScanner() {
       },
 
 
-      /* =========================
-         SCAN ERROR
-         ========================= */
+      /* ==========================================
+         ERROR SCAN SEMENTARA
+         ========================================== */
 
       function(errorMessage) {
 
         /*
-         * Error sementara diabaikan.
+         * Tidak melakukan apa-apa.
+         *
+         * Scanner tetap mencari barcode.
          */
 
       }
@@ -573,6 +720,12 @@ function startScanner() {
 
 
       scannerRunning = true;
+
+
+      document
+        .getElementById('status')
+        .className =
+          'status';
 
 
       document
@@ -590,6 +743,15 @@ function startScanner() {
       console.error(error);
 
 
+      scannerRunning = false;
+
+
+      document
+        .getElementById('status')
+        .className =
+          'status';
+
+
       document
         .getElementById('status')
         .textContent =
@@ -603,13 +765,129 @@ function startScanner() {
 
 
 /* =====================================================
+   PAUSE SCANNER
+   ===================================================== */
+
+function pauseScanner() {
+
+
+  if (!scanner ||
+      !scannerRunning) {
+
+    restartScannerAfterDelay();
+
+    return;
+
+  }
+
+
+  scanner
+
+    .stop()
+
+    .then(function() {
+
+
+      scannerRunning = false;
+
+
+      /*
+       * Setelah 1,2 detik,
+       * scanner aktif kembali.
+       */
+
+      restartScannerAfterDelay();
+
+
+    })
+
+    .catch(function(error) {
+
+
+      console.error(error);
+
+
+      scannerRunning = false;
+
+
+      restartScannerAfterDelay();
+
+    });
+
+}
+
+
+
+/* =====================================================
+   RESTART SCANNER
+   ===================================================== */
+
+function restartScannerAfterDelay() {
+
+
+  if (restartTimer) {
+
+    clearTimeout(
+      restartTimer
+    );
+
+  }
+
+
+  restartTimer =
+    setTimeout(function() {
+
+
+      restartTimer = null;
+
+
+      /*
+       * Bersihkan object scanner lama.
+       */
+
+      scanner = null;
+
+
+      /*
+       * Scanner aktif lagi.
+       */
+
+      startScanner();
+
+
+    }, SCAN_DELAY);
+
+}
+
+
+
+/* =====================================================
    STOP SCANNER
    ===================================================== */
 
 function stopScanner() {
 
 
-  if (!scanner || !scannerRunning) {
+  /*
+   * Batalkan restart otomatis.
+   */
+
+  if (restartTimer) {
+
+    clearTimeout(
+      restartTimer
+    );
+
+    restartTimer = null;
+
+  }
+
+
+  scanLocked = true;
+
+
+  if (!scanner ||
+      !scannerRunning) {
 
 
     document
@@ -626,7 +904,6 @@ function stopScanner() {
 
     .stop()
 
-
     .then(function() {
 
 
@@ -641,6 +918,12 @@ function stopScanner() {
       document
         .getElementById('scanner')
         .classList.remove('active');
+
+
+      document
+        .getElementById('status')
+        .className =
+          'status';
 
 
       document
@@ -666,7 +949,6 @@ function stopScanner() {
       document
         .getElementById('scanner')
         .classList.remove('active');
-
 
     });
 
@@ -723,6 +1005,12 @@ function lookupProduct(barcode) {
 
     document
       .getElementById('status')
+      .className =
+        'status';
+
+
+    document
+      .getElementById('status')
       .textContent =
         'Gagal menghubungi server produk.';
 
@@ -752,6 +1040,12 @@ function productCallback(response) {
 
     document
       .getElementById('status')
+      .className =
+        'status';
+
+
+    document
+      .getElementById('status')
       .textContent =
 
         response &&
@@ -776,7 +1070,15 @@ function productCallback(response) {
         );
 
 
-    scanLocked = false;
+    /*
+     * Tetap beri jeda sebelum scan berikutnya.
+     */
+
+    setTimeout(function() {
+
+      scanLocked = false;
+
+    }, SCAN_DELAY);
 
 
     return;
@@ -789,14 +1091,14 @@ function productCallback(response) {
 
 
   /*
-   * MASUKKAN PRODUK KE KERANJANG
+   * Masukkan ke keranjang.
    */
 
   addToCart(product);
 
 
   /*
-   * Tampilkan konfirmasi
+   * Feedback hasil scan.
    */
 
   document
@@ -814,23 +1116,21 @@ function productCallback(response) {
 
   document
     .getElementById('status')
+    .className =
+      'status success';
+
+
+  document
+    .getElementById('status')
     .textContent =
-      'Produk masuk keranjang.';
+      '✓ SCAN BERHASIL';
 
 
   /*
-   * Unlock setelah sedikit jeda.
-   *
-   * Tujuannya mencegah barcode yang sama
-   * terbaca berkali-kali dalam frame kamera
-   * yang sama.
+   * Setelah scanner di-pause,
+   * startScanner() akan dijalankan
+   * oleh timer.
    */
-
-  setTimeout(function() {
-
-    scanLocked = false;
-
-  }, 800);
 
 }
 
@@ -856,11 +1156,6 @@ function addToCart(product) {
   }
 
 
-  /*
-   * Produk sudah ada
-   * → tambah quantity.
-   */
-
   if (cart[id]) {
 
 
@@ -868,11 +1163,6 @@ function addToCart(product) {
 
 
   }
-
-
-  /*
-   * Produk baru
-   */
 
   else {
 
@@ -885,7 +1175,8 @@ function addToCart(product) {
 
       supplier: product.supplier,
 
-      price: Number(product.price) || 0,
+      price:
+        Number(product.price) || 0,
 
       qty: 1
 
@@ -916,10 +1207,6 @@ function renderCart() {
   const ids =
     Object.keys(cart);
 
-
-  /*
-   * Keranjang kosong
-   */
 
   if (ids.length === 0) {
 
@@ -974,7 +1261,6 @@ function renderCart() {
 
         '</div>' +
 
-
         '<div class="cart-item-detail">' +
 
           '<span>' +
@@ -986,7 +1272,6 @@ function renderCart() {
             formatRupiah(item.price) +
 
           '</span>' +
-
 
           '<span class="cart-item-subtotal">' +
 
@@ -1047,6 +1332,12 @@ function clearCart() {
 
 
   renderCart();
+
+
+  document
+    .getElementById('status')
+    .className =
+      'status';
 
 
   document
