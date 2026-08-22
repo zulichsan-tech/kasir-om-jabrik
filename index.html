@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
 
@@ -12,6 +13,7 @@
           type="text/javascript"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -20,6 +22,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f2f2f2;
+      color: #222;
     }
 
     .app {
@@ -30,7 +33,7 @@
     }
 
     .header {
-      padding: 20px;
+      padding: 18px;
       background: #222;
       color: white;
       text-align: center;
@@ -38,35 +41,60 @@
 
     .header h1 {
       margin: 0;
-      font-size: 22px;
+      font-size: 21px;
     }
 
     .content {
-      padding: 20px;
+      padding: 16px;
     }
+
+
+    /* =========================
+       SCAN BUTTON
+       ========================= */
 
     .scan-button {
       width: 100%;
       padding: 18px;
+
       border: 0;
       border-radius: 12px;
+
       background: #222;
       color: white;
+
       font-size: 18px;
       font-weight: bold;
+
+      cursor: pointer;
     }
 
+
+    /* =========================
+       STATUS
+       ========================= */
+
     .status {
-      margin-top: 20px;
-      padding: 15px;
+      margin-top: 12px;
+      padding: 12px;
+
       border-radius: 10px;
+
       background: #eee;
+
       text-align: center;
+
+      font-size: 14px;
     }
+
+
+    /* =========================
+       SCANNER
+       ========================= */
 
     .scanner {
       display: none;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     .scanner.active {
@@ -77,106 +105,385 @@
       width: 100%;
     }
 
-    .result {
-      margin-top: 15px;
-      padding: 15px;
+    .scanner-result {
+      margin-top: 10px;
+
+      padding: 12px;
+
+      background: #f4f4f4;
+
+      border-radius: 10px;
+
       text-align: center;
-      font-size: 18px;
-      font-weight: bold;
+
+      font-size: 15px;
     }
 
     .close-button {
       width: 100%;
-      padding: 15px;
+
+      padding: 14px;
+
       border: 0;
       border-radius: 10px;
-      background: #555;
+
+      background: #666;
       color: white;
-      font-size: 16px;
+
+      font-size: 15px;
+      font-weight: bold;
+
       margin-top: 10px;
     }
+
+
+    /* =========================
+       KERANJANG
+       ========================= */
+
+    .cart {
+      margin-top: 20px;
+    }
+
+    .cart-title {
+      font-size: 18px;
+      font-weight: bold;
+
+      padding-bottom: 10px;
+
+      border-bottom: 2px solid #222;
+    }
+
+    .cart-empty {
+      padding: 25px 10px;
+
+      text-align: center;
+
+      color: #888;
+    }
+
+    .cart-item {
+      padding: 14px 0;
+
+      border-bottom: 1px solid #ddd;
+    }
+
+    .cart-item-name {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .cart-item-detail {
+      margin-top: 5px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      font-size: 14px;
+    }
+
+    .cart-item-subtotal {
+      font-weight: bold;
+    }
+
+
+    /* =========================
+       TOTAL
+       ========================= */
+
+    .total-box {
+      margin-top: 20px;
+
+      padding: 18px;
+
+      border-radius: 12px;
+
+      background: #222;
+      color: white;
+
+      display: flex;
+
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-label {
+      font-size: 16px;
+    }
+
+    .total-value {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+
+    /* =========================
+       RESET
+       ========================= */
+
+    .reset-button {
+      width: 100%;
+
+      margin-top: 12px;
+
+      padding: 14px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 10px;
+
+      background: white;
+
+      font-size: 15px;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
 <div class="app">
 
+
+  <!-- =========================
+       HEADER
+       ========================= -->
+
   <div class="header">
+
     <h1>KASIR OM JABRIK</h1>
+
   </div>
+
 
   <div class="content">
 
+
+    <!-- =========================
+         SCAN
+         ========================= -->
+
     <button class="scan-button"
             onclick="startScanner()">
+
       📷 SCAN BARCODE
+
     </button>
+
 
     <div id="status"
          class="status">
+
       Scanner siap digunakan.
+
     </div>
+
+
+    <!-- =========================
+         SCANNER
+         ========================= -->
 
     <div id="scanner"
          class="scanner">
 
       <div id="reader"></div>
 
-      <div id="result"
-           class="result">
+      <div id="scannerResult"
+           class="scanner-result">
+
         Arahkan kamera ke barcode
+
       </div>
 
       <button class="close-button"
               onclick="stopScanner()">
+
         TUTUP KAMERA
+
       </button>
 
     </div>
+
+
+    <!-- =========================
+         KERANJANG
+         ========================= -->
+
+    <div class="cart">
+
+      <div class="cart-title">
+
+        KERANJANG
+
+      </div>
+
+
+      <div id="cartItems">
+
+        <div class="cart-empty">
+
+          Belum ada produk.
+
+        </div>
+
+      </div>
+
+
+      <div class="total-box">
+
+        <div class="total-label">
+
+          TOTAL
+
+        </div>
+
+        <div id="cartTotal"
+             class="total-value">
+
+          Rp0
+
+        </div>
+
+      </div>
+
+
+      <button class="reset-button"
+              onclick="clearCart()">
+
+        HAPUS SEMUA
+
+      </button>
+
+    </div>
+
 
   </div>
 
 </div>
 
 
+
 <script>
 
-let scanner = null;
-let scannerRunning = false;
-let scanLocked = false;
+
+/* =====================================================
+   KONFIGURASI
+   ===================================================== */
+
 const API_URL =
   'https://script.google.com/macros/s/AKfycbyIJ3H6BV26AhvtllT1P-7sYXADInO5zPY8rTnRhUtGEecyWD9y_AGbVh57HKIto1fVtQ/exec';
 
-/* ==============================
-   MULAI SCANNER
-   ============================== */
+
+
+/* =====================================================
+   STATE
+   ===================================================== */
+
+let scanner = null;
+
+let scannerRunning = false;
+
+let scanLocked = false;
+
+
+/*
+ * Keranjang.
+ *
+ * Struktur:
+ *
+ * {
+ *   PRD001: {
+ *     id: "PRD001",
+ *     name: "NASI GEPREK",
+ *     price: 10000,
+ *     qty: 2
+ *   }
+ * }
+ */
+
+let cart = {};
+
+
+
+/* =====================================================
+   FORMAT RUPIAH
+   ===================================================== */
+
+function formatRupiah(value) {
+
+  return 'Rp' +
+    Number(value || 0)
+      .toLocaleString('id-ID');
+
+}
+
+
+
+/* =====================================================
+   ESCAPE HTML
+   ===================================================== */
+
+function escapeHtml(value) {
+
+  return String(value || '')
+
+    .replace(/&/g, '&amp;')
+
+    .replace(/</g, '&lt;')
+
+    .replace(/>/g, '&gt;')
+
+    .replace(/"/g, '&quot;')
+
+    .replace(/'/g, '&#039;');
+
+}
+
+
+
+/* =====================================================
+   START SCANNER
+   ===================================================== */
 
 function startScanner() {
 
+
   if (scannerRunning) {
+
     return;
+
   }
+
 
   document
     .getElementById('scanner')
     .classList.add('active');
+
 
   document
     .getElementById('status')
     .textContent =
       'Meminta akses kamera...';
 
+
   document
-    .getElementById('result')
+    .getElementById('scannerResult')
     .textContent =
       'Arahkan kamera ke barcode';
 
+
   scanLocked = false;
 
-  scanner = new Html5Qrcode('reader');
+
+  scanner =
+    new Html5Qrcode('reader');
+
 
   const config = {
+
     fps: 10,
 
     qrbox: function(width, height) {
@@ -187,192 +494,293 @@ function startScanner() {
         );
 
       return {
+
         width: size,
+
         height: size
+
       };
+
     }
+
   };
 
 
   scanner
+
     .start(
 
       {
         facingMode: {
-          exact: "environment"
+          exact: 'environment'
         }
       },
 
       config,
 
+
+      /* =========================
+         BARCODE BERHASIL DIBACA
+         ========================= */
+
       function(decodedText) {
 
-  if (scanLocked) {
-    return;
-  }
 
-  scanLocked = true;
+        if (scanLocked) {
 
-  document
-    .getElementById('result')
-    .textContent =
-      'Barcode: ' + decodedText;
+          return;
 
-  document
-    .getElementById('status')
-    .textContent =
-      'Mencari produk...';
+        }
 
-  lookupProduct(decodedText);
 
-},
+        scanLocked = true;
+
+
+        document
+          .getElementById('scannerResult')
+          .textContent =
+            'Barcode: ' + decodedText;
+
+
+        document
+          .getElementById('status')
+          .textContent =
+            'Mencari produk...';
+
+
+        lookupProduct(decodedText);
+
+
+      },
+
+
+      /* =========================
+         SCAN ERROR
+         ========================= */
 
       function(errorMessage) {
 
-        // Abaikan error scan sementara.
+        /*
+         * Error sementara diabaikan.
+         */
 
       }
 
     )
 
+
     .then(function() {
 
+
       scannerRunning = true;
+
 
       document
         .getElementById('status')
         .textContent =
           'Kamera aktif.';
 
+
     })
+
 
     .catch(function(error) {
 
+
       console.error(error);
+
 
       document
         .getElementById('status')
         .textContent =
-          'Kamera tidak dapat dibuka: ' +
-          error;
+          'Kamera tidak dapat dibuka.';
+
 
     });
+
 }
 
-function lookupProduct(barcode) {
-
-  const url =
-    API_URL +
-    '?api=product' +
-    '&code=' +
-    encodeURIComponent(barcode) +
-    '&callback=productCallback';
 
 
-  const oldScript =
-    document.getElementById('productApiScript');
-
-  if (oldScript) {
-    oldScript.remove();
-  }
-
-
-  const script =
-    document.createElement('script');
-
-  script.id =
-    'productApiScript';
-
-  script.src = url;
-
-
-  script.onerror = function() {
-
-    document
-      .getElementById('status')
-      .textContent =
-        'Gagal menghubungi server produk.';
-
-    scanLocked = false;
-  };
-
-
-  document.body.appendChild(script);
-}
-  
-/* ==============================
-   HENTIKAN SCANNER
-   ============================== */
+/* =====================================================
+   STOP SCANNER
+   ===================================================== */
 
 function stopScanner() {
 
+
   if (!scanner || !scannerRunning) {
+
 
     document
       .getElementById('scanner')
       .classList.remove('active');
 
+
     return;
+
   }
 
 
   scanner
+
     .stop()
+
 
     .then(function() {
 
+
       scanner.clear();
 
+
       scanner = null;
+
       scannerRunning = false;
+
 
       document
         .getElementById('scanner')
         .classList.remove('active');
+
 
       document
         .getElementById('status')
         .textContent =
           'Scanner siap digunakan.';
 
+
     })
+
 
     .catch(function(error) {
 
+
       console.error(error);
 
+
       scanner = null;
+
       scannerRunning = false;
+
 
       document
         .getElementById('scanner')
         .classList.remove('active');
 
+
     });
+
 }
 
-  function productCallback(response) {
 
-  if (!response || !response.success) {
+
+/* =====================================================
+   LOOKUP PRODUK
+   ===================================================== */
+
+function lookupProduct(barcode) {
+
+
+  const url =
+
+    API_URL +
+
+    '?api=product' +
+
+    '&code=' +
+
+    encodeURIComponent(barcode) +
+
+    '&callback=productCallback';
+
+
+  const oldScript =
+    document.getElementById(
+      'productApiScript'
+    );
+
+
+  if (oldScript) {
+
+    oldScript.remove();
+
+  }
+
+
+  const script =
+    document.createElement('script');
+
+
+  script.id =
+    'productApiScript';
+
+
+  script.src = url;
+
+
+  script.onerror = function() {
+
 
     document
       .getElementById('status')
       .textContent =
-        response && response.message
-          ? response.message
-          : 'Produk tidak ditemukan.';
+        'Gagal menghubungi server produk.';
 
-    document
-      .getElementById('result')
-      .textContent =
-        'Barcode: ' +
-        (response && response.code
-          ? response.code
-          : '');
 
     scanLocked = false;
 
+  };
+
+
+  document.body
+    .appendChild(script);
+
+}
+
+
+
+/* =====================================================
+   PRODUCT CALLBACK
+   ===================================================== */
+
+function productCallback(response) {
+
+
+  if (!response ||
+      !response.success) {
+
+
+    document
+      .getElementById('status')
+      .textContent =
+
+        response &&
+        response.message
+
+          ? response.message
+
+          : 'Produk tidak ditemukan.';
+
+
+    document
+      .getElementById('scannerResult')
+      .textContent =
+
+        'Barcode: ' +
+
+        (
+          response &&
+          response.code
+            ? response.code
+            : ''
+        );
+
+
+    scanLocked = false;
+
+
     return;
+
   }
 
 
@@ -380,53 +788,277 @@ function stopScanner() {
     response.product;
 
 
+  /*
+   * MASUKKAN PRODUK KE KERANJANG
+   */
+
+  addToCart(product);
+
+
+  /*
+   * Tampilkan konfirmasi
+   */
+
   document
-    .getElementById('result')
+    .getElementById('scannerResult')
     .innerHTML =
+
       '<strong>' +
+
       escapeHtml(product.name) +
+
       '</strong><br>' +
-      escapeHtml(product.supplier) +
-      '<br><br>' +
+
       formatRupiah(product.price);
 
 
   document
     .getElementById('status')
     .textContent =
-      'Produk ditemukan.';
+      'Produk masuk keranjang.';
 
 
   /*
-   * Untuk tahap ini belum masuk keranjang.
+   * Unlock setelah sedikit jeda.
    *
-   * Kita hanya membuktikan:
-   *
-   * SCAN → API → PRODUK → tampil.
+   * Tujuannya mencegah barcode yang sama
+   * terbaca berkali-kali dalam frame kamera
+   * yang sama.
    */
-}
 
-  function formatRupiah(value) {
+  setTimeout(function() {
 
-  return 'Rp' +
-    Number(value || 0)
-      .toLocaleString('id-ID');
+    scanLocked = false;
 
-}
-
-
-function escapeHtml(value) {
-
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  }, 800);
 
 }
+
+
+
+/* =====================================================
+   TAMBAH KE KERANJANG
+   ===================================================== */
+
+function addToCart(product) {
+
+
+  const id =
+    String(product.id)
+      .trim()
+      .toUpperCase();
+
+
+  if (!id) {
+
+    return;
+
+  }
+
+
+  /*
+   * Produk sudah ada
+   * → tambah quantity.
+   */
+
+  if (cart[id]) {
+
+
+    cart[id].qty += 1;
+
+
+  }
+
+
+  /*
+   * Produk baru
+   */
+
+  else {
+
+
+    cart[id] = {
+
+      id: id,
+
+      name: product.name,
+
+      supplier: product.supplier,
+
+      price: Number(product.price) || 0,
+
+      qty: 1
+
+    };
+
+  }
+
+
+  renderCart();
+
+}
+
+
+
+/* =====================================================
+   RENDER KERANJANG
+   ===================================================== */
+
+function renderCart() {
+
+
+  const container =
+    document.getElementById(
+      'cartItems'
+    );
+
+
+  const ids =
+    Object.keys(cart);
+
+
+  /*
+   * Keranjang kosong
+   */
+
+  if (ids.length === 0) {
+
+
+    container.innerHTML =
+
+      '<div class="cart-empty">' +
+
+      'Belum ada produk.' +
+
+      '</div>';
+
+
+    document
+      .getElementById('cartTotal')
+      .textContent =
+        'Rp0';
+
+
+    return;
+
+  }
+
+
+  let html = '';
+
+  let total = 0;
+
+
+  ids.forEach(function(id) {
+
+
+    const item =
+      cart[id];
+
+
+    const subtotal =
+      item.price *
+      item.qty;
+
+
+    total += subtotal;
+
+
+    html +=
+
+      '<div class="cart-item">' +
+
+        '<div class="cart-item-name">' +
+
+          escapeHtml(item.name) +
+
+        '</div>' +
+
+
+        '<div class="cart-item-detail">' +
+
+          '<span>' +
+
+            item.qty +
+
+            ' × ' +
+
+            formatRupiah(item.price) +
+
+          '</span>' +
+
+
+          '<span class="cart-item-subtotal">' +
+
+            formatRupiah(subtotal) +
+
+          '</span>' +
+
+        '</div>' +
+
+      '</div>';
+
+  });
+
+
+  container.innerHTML =
+    html;
+
+
+  document
+    .getElementById('cartTotal')
+    .textContent =
+      formatRupiah(total);
+
+}
+
+
+
+/* =====================================================
+   HAPUS SEMUA
+   ===================================================== */
+
+function clearCart() {
+
+
+  if (
+    Object.keys(cart).length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  const confirmClear =
+    confirm(
+      'Hapus semua produk dari keranjang?'
+    );
+
+
+  if (!confirmClear) {
+
+    return;
+
+  }
+
+
+  cart = {};
+
+
+  renderCart();
+
+
+  document
+    .getElementById('status')
+    .textContent =
+      'Keranjang dikosongkan.';
+
+}
+
 
 </script>
 
 </body>
+
 </html>
