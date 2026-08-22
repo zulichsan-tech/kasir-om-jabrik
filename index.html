@@ -629,10 +629,6 @@ function startScanner() {
 
   lookupProduct(decodedText);
 
-  setTimeout(function() {
-    scanLocked = false;
-    scanCooldown = false;
-  }, 3000);
 }
 
 
@@ -970,56 +966,30 @@ function lookupProduct(barcode) {
 
 function productCallback(response) {
 
-
-  if (!response ||
-      !response.success) {
-
-
-    document
-      .getElementById('status')
-      .className =
-        'status';
-
+  if (!response || !response.success) {
 
     document
       .getElementById('status')
       .textContent =
-
-        response &&
-        response.message
-
+        response && response.message
           ? response.message
-
           : 'Produk tidak ditemukan.';
 
-
     document
-      .getElementById('scannerResult')
+      .getElementById('result')
       .textContent =
-
         'Barcode: ' +
+        (response && response.code
+          ? response.code
+          : '');
 
-        (
-          response &&
-          response.code
-            ? response.code
-            : ''
-        );
-
-
-    /*
-     * Tetap beri jeda sebelum scan berikutnya.
-     */
-
+    // Tetap beri jeda 3 detik
     setTimeout(function() {
-
       scanLocked = false;
-
-    }, SCAN_DELAY);
-
+      scanCooldown = false;
+    }, 3000);
 
     return;
-
   }
 
 
@@ -1027,48 +997,35 @@ function productCallback(response) {
     response.product;
 
 
-  /*
-   * Masukkan ke keranjang.
-   */
-
-  addToCart(product);
-
-
-  /*
-   * Feedback hasil scan.
-   */
-
   document
-    .getElementById('scannerResult')
+    .getElementById('result')
     .innerHTML =
-
       '<strong>' +
-
       escapeHtml(product.name) +
-
       '</strong><br>' +
-
+      escapeHtml(product.supplier) +
+      '<br><br>' +
       formatRupiah(product.price);
 
 
   document
     .getElementById('status')
-    .className =
-      'status success';
-
-
-  document
-    .getElementById('status')
     .textContent =
-      '✓ SCAN BERHASIL';
+      'Produk ditemukan.';
 
 
-  /*
-   * Setelah scanner di-pause,
-   * startScanner() akan dijalankan
-   * oleh timer.
-   */
+  // Jeda antar scan = 3 detik
+  setTimeout(function() {
 
+    scanLocked = false;
+    scanCooldown = false;
+
+    document
+      .getElementById('status')
+      .textContent =
+        'Siap scan berikutnya.';
+
+  }, 3000);
 }
 
 
