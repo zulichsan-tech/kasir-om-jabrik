@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Kasir Om Jabrik</title>
+
+  <script src="https://unpkg.com/html5-qrcode"
+          type="text/javascript"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+    }
+
+    .app {
+      max-width: 600px;
+      min-height: 100vh;
+      margin: auto;
+      background: white;
+    }
+
+    .header {
+      padding: 20px;
+      background: #222;
+      color: white;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .scan-button {
+      width: 100%;
+      padding: 18px;
+      border: 0;
+      border-radius: 12px;
+      background: #222;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #eee;
+      text-align: center;
+    }
+
+    .scanner {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .scanner.active {
+      display: block;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .close-button {
+      width: 100%;
+      padding: 15px;
+      border: 0;
+      border-radius: 10px;
+      background: #555;
+      color: white;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <h1>KASIR OM JABRIK</h1>
+  </div>
+
+  <div class="content">
+
+    <button class="scan-button"
+            onclick="startScanner()">
+      📷 SCAN BARCODE
+    </button>
+
+    <div id="status"
+         class="status">
+      Scanner siap digunakan.
+    </div>
+
+    <div id="scanner"
+         class="scanner">
+
+      <div id="reader"></div>
+
+      <div id="result"
+           class="result">
+        Arahkan kamera ke barcode
+      </div>
+
+      <button class="close-button"
+              onclick="stopScanner()">
+        TUTUP KAMERA
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+let scanner = null;
+let scannerRunning = false;
+let scanLocked = false;
+
+
+/* ==============================
+   MULAI SCANNER
+   ============================== */
+
+function startScanner() {
+
+  if (scannerRunning) {
+    return;
+  }
+
+  document
+    .getElementById('scanner')
+    .classList.add('active');
+
+  document
+    .getElementById('status')
+    .textContent =
+      'Meminta akses kamera...';
+
+  document
+    .getElementById('result')
+    .textContent =
+      'Arahkan kamera ke barcode';
+
+  scanLocked = false;
+
+  scanner = new Html5Qrcode('reader');
+
+  const config = {
+    fps: 10,
+
+    qrbox: function(width, height) {
+
+      const size =
+        Math.floor(
+          Math.min(width, height) * 0.7
+        );
+
+      return {
+        width: size,
+        height: size
+      };
+    }
+  };
+
+
+  scanner
+    .start(
+
+      {
+        facingMode: {
+          exact: "environment"
+        }
+      },
+
+      config,
+
+      function(decodedText) {
+
+        if (scanLocked) {
+          return;
+        }
+
+        scanLocked = true;
+
+        document
+          .getElementById('result')
+          .textContent =
+            'BARCODE: ' + decodedText;
+
+        document
+          .getElementById('status')
+          .textContent =
+            'Barcode berhasil dibaca.';
+
+        /*
+         * BELUM dikirim ke Spreadsheet.
+         *
+         * Untuk tahap ini kita hanya
+         * menguji kemampuan scanner.
+         */
+
+      },
+
+      function(errorMessage) {
+
+        // Abaikan error scan sementara.
+
+      }
+
+    )
+
+    .then(function() {
+
+      scannerRunning = true;
+
+      document
+        .getElementById('status')
+        .textContent =
+          'Kamera aktif.';
+
+    })
+
+    .catch(function(error) {
+
+      console.error(error);
+
+      document
+        .getElementById('status')
+        .textContent =
+          'Kamera tidak dapat dibuka: ' +
+          error;
+
+    });
+}
+
+
+/* ==============================
+   HENTIKAN SCANNER
+   ============================== */
+
+function stopScanner() {
+
+  if (!scanner || !scannerRunning) {
+
+    document
+      .getElementById('scanner')
+      .classList.remove('active');
+
+    return;
+  }
+
+
+  scanner
+    .stop()
+
+    .then(function() {
+
+      scanner.clear();
+
+      scanner = null;
+      scannerRunning = false;
+
+      document
+        .getElementById('scanner')
+        .classList.remove('active');
+
+      document
+        .getElementById('status')
+        .textContent =
+          'Scanner siap digunakan.';
+
+    })
+
+    .catch(function(error) {
+
+      console.error(error);
+
+      scanner = null;
+      scannerRunning = false;
+
+      document
+        .getElementById('scanner')
+        .classList.remove('active');
+
+    });
+}
+
+</script>
+
+</body>
+</html>
