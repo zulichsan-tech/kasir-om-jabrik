@@ -398,11 +398,9 @@ const SCAN_DELAY = 1200;
    ===================================================== */
 
 let scanner = null;
-
 let scannerRunning = false;
-
 let scanLocked = false;
-
+let scanCooldown = false;
 let restartTimer = null;
 
 
@@ -608,74 +606,34 @@ function startScanner() {
          BARCODE BERHASIL DIBACA
          ========================================== */
 
-      function(decodedText) {
+     function(decodedText) {
 
+  if (scanLocked || scanCooldown) {
+    return;
+  }
 
-        /*
-         * Jika sedang dalam proses,
-         * abaikan pembacaan berikutnya.
-         */
+  scanLocked = true;
+  scanCooldown = true;
 
-        if (scanLocked) {
+  beep();
 
-          return;
+  document
+    .getElementById('result')
+    .textContent =
+      'Barcode: ' + decodedText;
 
-        }
+  document
+    .getElementById('status')
+    .textContent =
+      'Mencari produk...';
 
+  lookupProduct(decodedText);
 
-        scanLocked = true;
-
-
-        /*
-         * BEEP
-         */
-
-        beep();
-
-
-        /*
-         * Feedback visual
-         */
-
-        document
-          .getElementById('status')
-          .className =
-            'status success';
-
-
-        document
-          .getElementById('status')
-          .textContent =
-            '✓ SCAN BERHASIL';
-
-
-        document
-          .getElementById('scannerResult')
-          .textContent =
-            'Barcode: ' + decodedText;
-
-
-        /*
-         * PENTING:
-         *
-         * Hentikan kamera sementara.
-         *
-         * Dengan demikian barcode yang masih
-         * berada di depan kamera tidak langsung
-         * terbaca kembali.
-         */
-
-        pauseScanner();
-
-
-        /*
-         * Cari produk.
-         */
-
-        lookupProduct(decodedText);
-
-
-      },
+  setTimeout(function() {
+    scanLocked = false;
+    scanCooldown = false;
+  }, 1500);
+}
 
 
       /* ==========================================
