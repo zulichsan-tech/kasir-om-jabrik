@@ -618,9 +618,9 @@ function startScanner() {
   beep();
 
   document
-    .getElementById('result')
-    .textContent =
-      'Barcode: ' + decodedText;
+  .getElementById('scannerResult')
+  .textContent =
+    'Barcode: ' + decodedText;
 
   document
     .getElementById('status')
@@ -976,7 +976,7 @@ function productCallback(response) {
           : 'Produk tidak ditemukan.';
 
     document
-      .getElementById('result')
+     .getElementById('scannerResult')
       .textContent =
         'Barcode: ' +
         (response && response.code
@@ -998,7 +998,7 @@ function productCallback(response) {
 
 
   document
-    .getElementById('result')
+   .getElementById('scannerResult')
     .innerHTML =
       '<strong>' +
       escapeHtml(product.name) +
