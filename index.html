@@ -455,19 +455,19 @@ function escapeHtml(value) {
    ===================================================== */
 
 function beep() {
-
   try {
-
     const AudioContext =
-      window.AudioContext ||
-      window.webkitAudioContext;
+      window.AudioContext || window.webkitAudioContext;
 
     if (!AudioContext) {
       return;
     }
 
-    const audioContext =
-      new AudioContext();
+    const audioContext = new AudioContext();
+
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
 
     const oscillator =
       audioContext.createOscillator();
@@ -475,52 +475,31 @@ function beep() {
     const gainNode =
       audioContext.createGain();
 
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 
     oscillator.type = 'sine';
-
     oscillator.frequency.value = 1000;
 
-
     gainNode.gain.setValueAtTime(
-      0.0001,
+      0.25,
       audioContext.currentTime
     );
 
     gainNode.gain.exponentialRampToValueAtTime(
-      0.20,
-      audioContext.currentTime + 0.01
+      0.001,
+      audioContext.currentTime + 0.15
     );
-
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.0001,
-      audioContext.currentTime + 0.12
-    );
-
-
-    oscillator.connect(gainNode);
-
-    gainNode.connect(
-      audioContext.destination
-    );
-
 
     oscillator.start();
 
     oscillator.stop(
-      audioContext.currentTime + 0.12
+      audioContext.currentTime + 0.15
     );
 
+  } catch (error) {
+    console.error('Beep error:', error);
   }
-
-  catch (error) {
-
-    console.log(
-      'Beep tidak tersedia:',
-      error
-    );
-
-  }
-
 }
 
 
